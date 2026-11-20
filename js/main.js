@@ -51,7 +51,7 @@
       return proto + location.host + '/ws/stream/';
     })(),
     THEME_KEY: 'ap_theme',
-    REQUEST_TIMEOUT: 15000,
+    REQUEST_TIMEOUT: 45000,
   };
 
   /* ============================================================
@@ -88,6 +88,22 @@
     initials: function (name) {
       if (!name) return '—';
       return String(name).trim().split(/\s+/).map(function (w) { return w[0] || ''; }).join('').slice(0, 2).toUpperCase();
+    },
+    /** Litres → display string with mL when small (or always show mL secondary). */
+    volume: function (litres) {
+      if (litres == null || isNaN(litres)) return { text: '—', unit: '', ml: null, L: null };
+      var L = Number(litres);
+      var ml = L * 1000;
+      if (Math.abs(L) < 1) {
+        return { text: (Math.round(ml * 10) / 10).toString(), unit: 'mL', ml: ml, L: L };
+      }
+      return { text: Number(L).toFixed(3), unit: 'L', ml: ml, L: L };
+    },
+    volumeLabel: function (litres) {
+      var v = fmt.volume(litres);
+      if (v.ml == null) return '—';
+      if (v.unit === 'mL') return v.text + ' mL';
+      return v.text + ' L (' + Math.round(v.ml) + ' mL)';
     },
   };
 
@@ -454,8 +470,8 @@
     }
 
     function markLive(note) {
-      setText('kpiFlowNote', note || ('Live · ' + new Date().toLocaleTimeString()));
-      setText('dashboardLastUpdated', 'Live · ' + new Date().toLocaleTimeString());
+      setText('kpiFlowNote', note || ('Live - ' + new Date().toLocaleTimeString()));
+      setText('dashboardLastUpdated', 'Live - ' + new Date().toLocaleTimeString());
     }
 
     function loadOverview(silent) {
@@ -765,73 +781,98 @@
   register('live-monitoring', function () {
     var liveChart = null, historyChart = null, ws = null, liveTimer = null;
     var liveSamples = [];
-    var LIVE_MAX = 60, LIVE_MS = 2000;
+    var LIVE_MAX = 60, LIVE_MS = 5000;
+    var liveInflight = false;
+    var liveFailStreak = 0;
+    var pollHealthy = false;
+    var lastIndicator = '';
 
     function themeColors() {
       var dark = document.documentElement.getAttribute('data-theme') === 'dark';
       return { text: dark ? '#94a3b8' : '#5a6a85', grid: dark ? '#334155' : '#e5eaef', mode: dark ? 'dark' : 'light' };
     }
 
-    function loadLive() {
-      Api.get('/monitoring/live/').then(function (d) {
-        if (!d) throw new Error('Empty live payload');
-        // {pipeline_id, current_flow_rate, consumption_today, volume_unit?, sensors:[...]}
-        setText('lm-flow-rate', fmt.num(d.current_flow_rate));
-        setText('lm-volume', fmt.num(d.consumption_today));
-        setText('lm-volume-unit', d.volume_unit || 'L');
+    function setLiveIndicator(text, force) {
+      if (!force && text === lastIndicator) return;
+      lastIndicator = text;
+      setText('lm-live-indicator', text);
+    }
+
+    function applyLivePayload(d) {
+      if (!d) return;
+      setText('lm-flow-rate', fmt.num(d.current_flow_rate));
+      var vol = fmt.volume(d.consumption_today);
+      setText('lm-volume', vol.text);
+      setText('lm-volume-unit', vol.unit || 'L');
+      if (vol.ml != null && vol.unit === 'L') {
+        setText('lm-volume-updated', Math.round(vol.ml).toLocaleString() + ' mL since midnight');
+      } else {
         setText('lm-volume-updated', 'Since midnight');
+      }
 
-        var sensors = d.sensors || [];
-        var freshCount = sensors.filter(function (s) {
-          if (s.fresh === true) return true;
-          var ts = s.last_reading && s.last_reading.reading_timestamp;
-          if (!ts) return false;
-          return (Date.now() - new Date(ts).getTime()) <= 45000;
-        }).length;
+      var sensors = d.sensors || [];
+      var freshCount = sensors.filter(function (s) {
+        if (s.fresh === true) return true;
+        var ts = s.last_reading && s.last_reading.reading_timestamp;
+        if (!ts) return false;
+        return (Date.now() - new Date(ts).getTime()) <= 45000;
+      }).length;
 
-        // Prefer sensor reading time over wall clock so frozen data is obvious
-        var newestTs = null;
-        sensors.forEach(function (s) {
-          var ts = s.last_reading && s.last_reading.reading_timestamp;
-          if (ts && (!newestTs || new Date(ts) > newestTs)) newestTs = new Date(ts);
-        });
-        setText(
-          'lm-flow-updated',
-          newestTs
-            ? ('Reading ' + newestTs.toLocaleTimeString() + (freshCount ? '' : ' · STALE'))
-            : ('Updated ' + new Date().toLocaleTimeString())
-        );
+      var newestTs = null;
+      sensors.forEach(function (s) {
+        var ts = s.last_reading && s.last_reading.reading_timestamp;
+        if (ts && (!newestTs || new Date(ts) > newestTs)) newestTs = new Date(ts);
+      });
+      setText(
+        'lm-flow-updated',
+        newestTs
+          ? ('Reading ' + newestTs.toLocaleTimeString() + (freshCount ? '' : ' - STALE'))
+          : ('Updated ' + new Date().toLocaleTimeString())
+      );
 
-        setBadge('lm-device-status', freshCount > 0 ? 'ONLINE' : 'OFFLINE', freshCount > 0 ? 'success' : 'danger');
-        setText('lm-device-detail', sensors.length ? sensors.length + ' sensor(s)' : 'No sensors');
+      setBadge('lm-device-status', freshCount > 0 ? 'ONLINE' : 'OFFLINE', freshCount > 0 ? 'success' : 'danger');
+      setText('lm-device-detail', sensors.length ? sensors.length + ' sensor(s)' : 'No sensors');
 
-        var sensorStatus = !sensors.length ? 'UNKNOWN' : (freshCount === sensors.length ? 'ONLINE' : (freshCount > 0 ? 'DEGRADED' : 'OFFLINE'));
-        setBadge('lm-sensor-status', sensorStatus, sensorStatus === 'ONLINE' ? 'success' : sensorStatus === 'DEGRADED' ? 'warning' : 'danger');
-        setText('lm-sensor-detail', freshCount + '/' + sensors.length + ' reporting');
+      var sensorStatus = !sensors.length ? 'UNKNOWN' : (freshCount === sensors.length ? 'ONLINE' : (freshCount > 0 ? 'DEGRADED' : 'OFFLINE'));
+      setBadge('lm-sensor-status', sensorStatus, sensorStatus === 'ONLINE' ? 'success' : sensorStatus === 'DEGRADED' ? 'warning' : 'danger');
+      setText('lm-sensor-detail', freshCount + '/' + sensors.length + ' reporting');
 
-        setText('lm-live-indicator', (freshCount ? 'Live' : 'Stale') + ' · ' + new Date().toLocaleTimeString());
-        try {
-          pushLivePoint(d.current_flow_rate);
-        } catch (chartErr) {
-          console.warn('[live] chart update skipped:', chartErr);
-        }
-        renderSensors(sensors);
+      setLiveIndicator((freshCount ? 'Live' : 'Stale') + ' - ' + new Date().toLocaleTimeString(), true);
+      try {
+        if (freshCount) pushLivePoint(d.current_flow_rate);
+      } catch (chartErr) {
+        console.warn('[live] chart update skipped:', chartErr);
+      }
+      renderSensors(sensors);
+    }
+
+    function isAbortError(err) {
+      return !!(err && (err.name === 'AbortError' || /abort/i.test(err.message || '')));
+    }
+
+    function loadLive() {
+      if (liveInflight) return;
+      liveInflight = true;
+      Api.get('/monitoring/live/').then(function (d) {
+        liveInflight = false;
+        liveFailStreak = 0;
+        pollHealthy = true;
+        applyLivePayload(d);
       }).catch(function (err) {
+        liveInflight = false;
+        liveFailStreak += 1;
         console.error('[live] live failed:', err);
-        setText('lm-live-indicator', 'Retrying… ' + (err && err.message ? err.message : 'API error'));
-        // One automatic retry after Render wake / brief network blip
-        setTimeout(function () {
-          Api.get('/monitoring/live/').then(function (d) {
-            if (!d) return;
-            setText('lm-flow-rate', fmt.num(d.current_flow_rate));
-            setText('lm-volume', fmt.num(d.consumption_today));
-            setText('lm-volume-unit', d.volume_unit || 'L');
-            renderSensors(d.sensors || []);
-            setText('lm-live-indicator', 'Live · ' + new Date().toLocaleTimeString());
-          }).catch(function () {
-            setText('lm-live-indicator', 'Live data unavailable');
-          });
-        }, 2500);
+        // Don't thrash the status line on transient aborts / free-tier wake
+        if (isAbortError(err) || liveFailStreak < 3) {
+          if (pollHealthy) {
+            setLiveIndicator('Live - catching up...');
+          } else if (liveFailStreak === 1) {
+            setLiveIndicator('Connecting...');
+          }
+          return;
+        }
+        pollHealthy = false;
+        setLiveIndicator('Live data unavailable');
       });
     }
 
@@ -854,7 +895,7 @@
         tooltip: { x: { format: 'HH:mm:ss' } },
         grid: { strokeDashArray: 4, borderColor: c.grid },
         theme: { mode: c.mode },
-        noData: { text: 'Waiting for readings…' },
+        noData: { text: 'Waiting for readings...' },
       });
       liveChart.render();
     }
@@ -880,19 +921,21 @@
         var ts = last.reading_timestamp ? new Date(last.reading_timestamp) : null;
         var online = s.fresh === true || (ts && (Date.now() - ts.getTime()) <= 45000);
         var variant = online ? 'success' : 'danger';
+        var volLine = last.volume != null ? fmt.volumeLabel(last.volume) : '';
         return '<div class="d-flex align-items-center justify-content-between p-3 border-bottom" style="border-color:var(--border-color)!important;">' +
           '<div class="d-flex align-items-center gap-2">' +
             '<i class="bi bi-broadcast text-primary"></i>' +
             '<div>' +
               '<div class="fw-semibold small">' + escapeHtml(s.sensor || '—') + '</div>' +
-              '<div class="text-muted" style="font-size:.72rem;">' + escapeHtml(s.position || '') + (ts ? (' · ' + ts.toLocaleTimeString()) : '') + '</div>' +
+              '<div class="text-muted" style="font-size:.72rem;">' + escapeHtml(s.position || '') + (ts ? (' - ' + ts.toLocaleTimeString()) : '') + '</div>' +
             '</div>' +
           '</div>' +
           '<div class="text-end">' +
             '<div class="fw-semibold small">' + (last.flow_rate != null ? fmt.num(last.flow_rate) + ' L/min' : '—') + '</div>' +
             '<div class="text-muted" style="font-size:.68rem;">' +
+              (volLine ? (volLine + ' - ') : '') +
               (Number(last.flow_rate) > 0.05 ? 'flowing' : 'no flow') +
-              (last.pulse_count != null ? (' · pulses ' + last.pulse_count) : '') +
+              (last.pulse_count != null ? (' - pulses ' + last.pulse_count) : '') +
             '</div>' +
             '<span class="status-badge ' + variant + '">' + (online ? 'ONLINE' : 'STALE') + '</span>' +
           '</div>' +
@@ -907,10 +950,7 @@
       if (interval === 'minute') start.setHours(now.getHours() - 1);
       else if (interval === 'hour') start.setHours(now.getHours() - 24);
       else start.setDate(now.getDate() - 30);
-      var pad = function (n) { return String(n).padStart(2, '0'); };
-      var ymd = function (d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
 
-      // /monitoring/history/ takes start & end (ISO datetime strings)
       Api.get('/monitoring/history/', {
         query: {
           start: start.toISOString(),
@@ -919,7 +959,6 @@
         },
       }).then(function (data) {
         var rows = toArray(data);
-        // backend returns FlowReading objects: {flow_rate, volume, reading_timestamp}
         var labels = rows.map(function (r) { return new Date(r.reading_timestamp).toLocaleTimeString(); });
         var values = rows.map(function (r) { return Number(r.flow_rate) || 0; });
         var c = themeColors();
@@ -938,9 +977,10 @@
         };
         var target = el('historyFlowChart');
         if (!target) return;
+        if (typeof ApexCharts === 'undefined') return;
         if (historyChart) { historyChart.updateOptions(options); historyChart.updateSeries(options.series); }
         else { historyChart = new ApexCharts(target, options); historyChart.render(); }
-      }).catch(function (err) { console.error('[live] history failed:', err); setError('historyFlowChart', 'Could not load historical flow'); });
+      }).catch(function (err) { console.error('[live] history failed:', err); });
     }
 
     function loadRecentReadings() {
@@ -957,11 +997,11 @@
           return '<tr>' +
             '<td class="text-muted small">' + (r.reading_timestamp ? new Date(r.reading_timestamp).toLocaleTimeString() : '—') + '</td>' +
             '<td>' + (r.flow_rate != null ? fmt.num(r.flow_rate) + ' L/min' : '—') + '</td>' +
-            '<td>' + (r.volume != null ? fmt.num(r.volume) + ' L' : '—') + '</td>' +
+            '<td>' + (r.volume != null ? fmt.volumeLabel(r.volume) : '—') + '</td>' +
             '<td>' + statusBadge('OK') + '</td>' +
           '</tr>';
         }).join('');
-      }).catch(function (err) { console.error('[live] readings failed:', err); setError('readingsTableBody', 'Could not load readings'); });
+      }).catch(function (err) { console.error('[live] readings failed:', err); });
     }
 
     function connectWS() {
@@ -970,14 +1010,22 @@
           var type = evt.type, data = evt.data || {};
           if (type === 'flow_reading_updated') {
             setText('lm-flow-rate', fmt.num(data.flow_rate));
-            setText('lm-flow-updated', 'Live · ' + new Date().toLocaleTimeString());
-            setText('lm-live-indicator', 'Live · ' + new Date().toLocaleTimeString());
+            if (data.volume != null) {
+              var vol = fmt.volume(data.volume);
+              setText('lm-volume', vol.text);
+              setText('lm-volume-unit', vol.unit || 'L');
+            }
+            setText('lm-flow-updated', 'Live - ' + new Date().toLocaleTimeString());
+            setLiveIndicator('Live - ' + new Date().toLocaleTimeString(), true);
+            pollHealthy = true;
             pushLivePoint(data.flow_rate);
           }
         },
         onStatus: function (s) {
-          if (s === 'OPEN') setText('lm-live-indicator', 'Live · connected');
-          if (s === 'CLOSED') setText('lm-live-indicator', 'Reconnecting…');
+          // Polling is the source of truth - don't flash Reconnecting over healthy Live
+          if (s === 'OPEN' && pollHealthy) {
+            setLiveIndicator('Live - connected');
+          }
         },
       });
     }
@@ -1002,9 +1050,6 @@
     });
   });
 
-  /* ============================================================
-     13. PAGE: analytics
-     ============================================================ */
   register('analytics', function () {
     var trendChart = null, breakdownChart = null, leakChart = null;
 
