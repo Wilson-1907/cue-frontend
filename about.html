@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>About Us — CUE</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="css/bootstrap.min.css" rel="stylesheet">
+  <link href="css/style.css" rel="stylesheet">
+  <link href="css/cue-public.css" rel="stylesheet">
+  <link href="css/msingi-widget.css" rel="stylesheet">
+  <style>
+    .cue-about-hero {
+      background:
+        radial-gradient(ellipse at 15% 0%, rgba(14,165,233,.28), transparent 48%),
+        linear-gradient(155deg, #0b1220 0%, #0f766e 115%);
+      color: #fff;
+    }
+    .cue-about-card {
+      border: 0;
+      border-radius: 18px;
+      box-shadow: 0 14px 36px rgba(15,23,42,.1);
+      height: 100%;
+      padding: clamp(1rem, 3vw, 1.5rem);
+    }
+    .cue-about-card h3 { font-size: 1.15rem; margin-bottom: .75rem; }
+    .cue-value {
+      border-left: 4px solid var(--bs-primary, #0d6efd);
+      padding-left: 1rem;
+      margin-bottom: 1.25rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container-fluid position-relative p-0">
+    <nav class="navbar navbar-expand-lg navbar-light px-3 px-sm-4 px-lg-5 py-3 py-lg-0">
+      <a href="index.html" class="navbar-brand p-0">
+        <h1 class="text-primary mb-0"><i class="fas fa-hand-holding-water me-2 me-sm-3"></i>CUE</h1>
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="fa fa-bars"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarCollapse">
+        <div class="navbar-nav ms-auto py-0 align-items-lg-center">
+          <a href="index.html" class="nav-item nav-link">Home</a>
+          <a href="about.html" class="nav-item nav-link active">About</a>
+          <a href="notices.html" class="nav-item nav-link">Notices</a>
+          <a href="contact.html" class="nav-item nav-link">Contact</a>
+          <a href="login.html" class="btn btn-primary rounded-pill px-4 ms-lg-2 mt-2 mt-lg-0">Login</a>
+        </div>
+      </div>
+    </nav>
+  </div>
+
+  <section class="cue-about-hero">
+    <div class="container">
+      <h1 class="display-5 fw-bold mb-3">About CUE</h1>
+      <p class="fs-5 mb-0 opacity-90" style="max-width: 720px;">
+        We build practical IoT tools that watch water flow, catch leaks early, and help communities conserve every drop.
+      </p>
+    </div>
+  </section>
+
+  <section class="container py-5">
+    <div class="row g-4 mb-4">
+      <div class="col-lg-7">
+        <h2 class="mb-3">Who we are</h2>
+        <p>
+          CUE (smart water monitoring) is a Kenyan-built platform that combines Arduino/IoT sensing with a live dashboard,
+          leak detection, SMS alerts, and automated valve control. Our official brand mark —
+          <strong class="text-primary"><i class="fas fa-hand-holding-water"></i> CUE</strong> —
+          stands for clear, usable water intelligence for homes, farms, and institutions.
+        </p>
+        <p class="mb-0">
+          From the pipe to the phone, CUE turns silent water loss into visible action: live L/min readings, locus estimates for repairs,
+          and fast shut-off when a leak is confirmed.
+        </p>
+      </div>
+      <div class="col-lg-5">
+        <div class="cue-about-card bg-light h-100">
+          <h3>At a glance</h3>
+          <ul class="mb-0">
+            <li>Inlet (S1) &amp; outlet (S2) flow monitoring</li>
+            <li>Automated leak confirmation &amp; valve close</li>
+            <li>SMS alerts with repair PIN / SEARCH guidance</li>
+            <li>Live dashboard, trends, and CUE Assistance</li>
+            <li>Support:
+              <a href="https://wa.me/254701519479" target="_blank" rel="noopener" title="WhatsApp" aria-label="WhatsApp" class="ms-1"><i class="fab fa-whatsapp"></i></a>
+              <a href="tel:0701519479" title="Call" aria-label="Call" class="ms-2"><i class="fas fa-phone"></i></a>
+              <a href="sms:0701519479" title="SMS" aria-label="SMS" class="ms-2"><i class="fas fa-sms"></i></a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4 mb-2">
+      <div class="col-md-4">
+        <div class="cue-about-card">
+          <h3><i class="fas fa-exclamation-circle text-primary me-2"></i>Problem</h3>
+          <p class="mb-0 text-muted">
+            Undetected leaks and late manual response waste scarce water and raise costs. Many sites have no affordable way
+            to compare inlet vs outlet flow or shut a line automatically when something goes wrong.
+          </p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="cue-about-card">
+          <h3><i class="fas fa-bullseye text-primary me-2"></i>Mission</h3>
+          <p class="mb-0 text-muted">
+            Deliver an affordable, reliable, user-friendly monitoring and control system that detects leaks early,
+            prevents wastage, and makes conservation practical for everyday operators.
+          </p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="cue-about-card">
+          <h3><i class="fas fa-eye text-primary me-2"></i>Vision</h3>
+          <p class="mb-0 text-muted">
+            Accessible IoT water management supporting SDG 6 — Clean Water and Sanitation — so communities protect every drop
+            with smart, local infrastructure.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <hr class="my-5">
+
+    <h2 class="mb-4">Core values</h2>
+    <div class="row">
+      <div class="col-lg-6">
+        <div class="cue-value">
+          <h4>Reliability</h4>
+          <p class="text-muted">Stable sensing, clear alerts, and valve actions that work when it counts.</p>
+        </div>
+        <div class="cue-value">
+          <h4>Affordability</h4>
+          <p class="text-muted">Hardware and software designed to be adopted beyond labs and pilots.</p>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="cue-value">
+          <h4>Transparency</h4>
+          <p class="text-muted">Live dashboards, honest leak locus guidance, and SMS you can act on.</p>
+        </div>
+        <div class="cue-value">
+          <h4>Stewardship</h4>
+          <p class="text-muted">Water is shared — we build tools that reduce waste and protect supply.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-light rounded p-4 p-md-5 mt-4">
+      <h2 class="h4 mb-3">What we deliver</h2>
+      <p class="mb-3">
+        A complete path from kit to cloud: Arduino firmware, serial/Wi‑Fi telemetry, Django API, operator dashboard,
+        leak SMS protocol, and CUE Assistance (text &amp; voice help). Operators can monitor flow, confirm leaks,
+        close valves, and reach support via the contact icons.
+      </p>
+      <a href="contact.html" class="btn btn-primary rounded-pill px-4 me-2">Contact us</a>
+      <a href="login.html" class="btn btn-outline-primary rounded-pill px-4">Open dashboard</a>
+    </div>
+  </section>
+
+  <div class="container-fluid copyright py-4">
+    <div class="container text-center">
+      <span class="text-body"><i class="fas fa-copyright me-2"></i>CUE — All rights reserved.</span>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/public-notices.js"></script>
+  <script src="js/msingi-widget.js"></script>
+</body>
+</html>

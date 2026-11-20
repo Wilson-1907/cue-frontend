@@ -1,0 +1,265 @@
+/* Msingi AI chat + floating contact bar */
+:root {
+  --ms-primary: #0ea5e9;
+  --ms-primary-dark: #0284c7;
+  --ms-wa: #25d366;
+  --ms-call: #2563eb;
+  --ms-sms: #7c3aed;
+  --ms-panel: #0b1220;
+  --ms-panel-2: #111827;
+  --ms-text: #e8eef7;
+  --ms-mute: #94a3b8;
+  --ms-user: #0369a1;
+  --ms-bot: #1e293b;
+  --ms-radius: 16px;
+  --ms-shadow: 0 12px 40px rgba(2, 12, 27, 0.35);
+}
+
+.ms-fab-stack {
+  position: fixed;
+  right: 18px;
+  bottom: 88px;
+  z-index: 1040;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.ms-fab-stack > * { pointer-events: auto; }
+
+.ms-chat-launcher {
+  width: 58px;
+  height: 58px;
+  border: 0;
+  border-radius: 50%;
+  background: linear-gradient(145deg, var(--ms-primary), var(--ms-primary-dark));
+  color: #fff;
+  box-shadow: var(--ms-shadow);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  font-size: 1.35rem;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.ms-chat-launcher:hover { transform: scale(1.06); }
+.ms-chat-launcher[aria-expanded="true"] { background: #334155; }
+
+.ms-chat-panel {
+  width: min(380px, calc(100vw - 28px));
+  height: min(520px, calc(100vh - 140px));
+  background: var(--ms-panel);
+  color: var(--ms-text);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: var(--ms-radius);
+  box-shadow: var(--ms-shadow);
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+}
+.ms-chat-panel.open { display: flex; }
+
+.ms-chat-head {
+  padding: 14px 16px;
+  background: linear-gradient(120deg, #0ea5e9 0%, #0369a1 55%, #0f766e 100%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ms-chat-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.18);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+}
+.ms-chat-head h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+.ms-chat-head p {
+  margin: 0;
+  font-size: .75rem;
+  opacity: .92;
+}
+.ms-chat-close {
+  margin-left: auto;
+  border: 0;
+  background: rgba(255,255,255,.15);
+  color: #fff;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.ms-chat-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px;
+  background: radial-gradient(ellipse at top, rgba(14,165,233,.12), transparent 55%), var(--ms-panel-2);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ms-msg {
+  max-width: 88%;
+  padding: 10px 12px;
+  border-radius: 14px;
+  font-size: .9rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+.ms-msg.bot {
+  align-self: flex-start;
+  background: var(--ms-bot);
+  border: 1px solid rgba(148,163,184,.2);
+  border-bottom-left-radius: 4px;
+}
+.ms-msg.user {
+  align-self: flex-end;
+  background: var(--ms-user);
+  border-bottom-right-radius: 4px;
+}
+.ms-msg .ms-meta {
+  display: block;
+  margin-top: 4px;
+  font-size: .68rem;
+  opacity: .7;
+}
+
+.ms-chat-foot {
+  border-top: 1px solid rgba(148,163,184,.2);
+  padding: 10px;
+  background: var(--ms-panel);
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+.ms-chat-foot textarea {
+  flex: 1;
+  resize: none;
+  min-height: 42px;
+  max-height: 96px;
+  border-radius: 12px;
+  border: 1px solid rgba(148,163,184,.3);
+  background: #0f172a;
+  color: var(--ms-text);
+  padding: 10px 12px;
+  font: inherit;
+}
+.ms-chat-foot textarea:focus {
+  outline: 2px solid rgba(14,165,233,.45);
+  border-color: transparent;
+}
+.ms-icon-btn {
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 12px;
+  cursor: pointer;
+  color: #fff;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.ms-icon-btn.mic { background: #0f766e; }
+.ms-icon-btn.mic.listening { background: #dc2626; animation: ms-pulse 1s infinite; }
+.ms-icon-btn.send { background: var(--ms-primary); }
+@keyframes ms-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(220,38,38,.45); }
+  50% { box-shadow: 0 0 0 10px rgba(220,38,38,0); }
+}
+
+/* Bottom floating contact bar */
+.ms-contact-bar {
+  position: fixed;
+  left: 50%;
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 1035;
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  max-width: calc(100vw - 16px);
+  background: rgba(15, 23, 42, 0.92);
+  border: 1px solid rgba(148,163,184,.28);
+  border-radius: 999px;
+  box-shadow: var(--ms-shadow);
+  backdrop-filter: blur(8px);
+  -webkit-overflow-scrolling: touch;
+}
+.ms-contact-bar a {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  text-decoration: none;
+  font-size: 1.1rem;
+  transition: transform .15s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  flex: 0 0 auto;
+}
+.ms-contact-bar a:hover,
+.ms-contact-bar a:focus-visible {
+  transform: translateY(-2px) scale(1.05);
+  color: #fff;
+  outline: none;
+}
+.ms-contact-bar .wa { background: var(--ms-wa); }
+.ms-contact-bar .call { background: var(--ms-call); }
+.ms-contact-bar .sms { background: var(--ms-sms); }
+.ms-contact-bar .mail { background: #0ea5e9; }
+.ms-contact-bar .mail2 { background: #0284c7; }
+
+@media (max-width: 420px) {
+  .ms-contact-bar {
+    gap: 5px;
+    padding: 6px 7px;
+    border-radius: 18px;
+  }
+  .ms-contact-bar a {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    font-size: 1rem;
+  }
+  .ms-fab-stack {
+    right: max(10px, env(safe-area-inset-right));
+    bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  }
+  .ms-chat-panel {
+    width: min(100vw - 16px, 380px);
+    height: min(68vh, 520px);
+  }
+  .ms-chat-launcher {
+    width: 52px;
+    height: 52px;
+  }
+}
+
+@media (min-width: 421px) and (max-width: 767.98px) {
+  .ms-fab-stack {
+    right: 14px;
+    bottom: calc(78px + env(safe-area-inset-bottom, 0px));
+  }
+  .ms-chat-panel { height: min(70vh, 520px); }
+}
+
+@media (min-width: 768px) {
+  .ms-fab-stack {
+    bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+  }
+}

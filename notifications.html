@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Notifications – CUE</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"/>
+  <link rel="stylesheet" href="css/cue.css">
+</head>
+<body data-page="notifications">
+
+  <div class="ap-app" id="ap-app">
+    <div class="ap-backdrop" id="ap-backdrop"></div>
+
+    <aside class="ap-sidebar" id="ap-sidebar">
+      <a href="dashboard.html" class="ap-brand">
+        <i class="fas fa-hand-holding-water"></i><span>CUE</span>
+      </a>
+      <nav class="flex-grow-1 overflow-auto">
+        <div class="ap-nav-section">Main Menu</div>
+        <a href="dashboard.html" class="ap-nav-item"><i class="bi bi-grid-1x2-fill"></i><span>Dashboard</span></a>
+        <a href="live-monitoring.html" class="ap-nav-item"><i class="bi bi-activity"></i><span>Live Monitoring</span></a>
+        <a href="analytics.html" class="ap-nav-item"><i class="bi bi-pie-chart"></i><span>Analytics & Reports</span></a>
+        <a href="water-usage.html" class="ap-nav-item"><i class="bi bi-water"></i><span>Water Usage</span></a>
+        <a href="leak-detection.html" class="ap-nav-item"><i class="bi bi-shield-exclamation"></i><span>Leak Detection</span></a>
+        <a href="valve-control.html" class="ap-nav-item"><i class="bi bi-toggles"></i><span>Valve Control</span></a>
+
+        <div class="ap-nav-section mt-3">Management</div>
+        <a href="devices.html" class="ap-nav-item"><i class="bi bi-cpu"></i><span>Devices & Sensors</span></a>
+        <a href="finance.html" class="ap-nav-item"><i class="bi bi-cash-stack"></i><span>Finance</span></a>
+        <a href="notifications.html" class="ap-nav-item active"><i class="bi bi-bell"></i><span>Notifications</span></a>
+        <a href="user-management.html" class="ap-nav-item"><i class="bi bi-people"></i><span>User Management</span></a>
+        <a href="activity-logs.html" class="ap-nav-item"><i class="bi bi-clock-history"></i><span>Activity Logs</span></a>
+
+        <div class="ap-nav-section mt-3">Configuration</div>
+        <a href="settings.html" class="ap-nav-item"><i class="bi bi-gear"></i><span>System Settings</span></a>
+        <a href="#" class="ap-nav-item text-danger" id="logoutBtn"><i class="bi bi-box-arrow-right"></i><span>Logout</span></a>
+      </nav>
+    </aside>
+
+    <main class="ap-main">
+      <header class="ap-topbar">
+        <div class="d-flex align-items-center gap-3">
+          <button class="ap-icon-btn border-0" id="sidebarToggle"><i class="bi bi-list" style="font-size:1.2rem;"></i></button>
+          <div class="d-none d-md-block">
+            <span class="text-muted small">Pages</span>
+            <i class="bi bi-chevron-right text-muted" style="font-size:0.7rem;"></i>
+            <span class="fw-semibold">Notifications</span>
+          </div>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+          <button class="ap-icon-btn border-0" id="themeToggle" title="Toggle Dark Mode">
+            <i class="bi bi-moon-fill" id="themeIcon"></i>
+          </button>
+          <a href="notifications.html" class="ap-icon-btn border-0 position-relative">
+            <i class="bi bi-bell"></i>
+            <span id="topbarUnreadDot" class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle d-none"></span>
+          </a>
+          <div class="dropdown">
+            <button class="btn p-0 border-0 d-flex align-items-center gap-2" data-bs-toggle="dropdown">
+              <div id="topbarAvatar" class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width:36px;height:36px;font-weight:bold;">—</div>
+              <span id="topbarUserName" class="d-none d-md-block fw-semibold text-main">—</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow">
+              <li><a class="dropdown-item" href="settings.html"><i class="bi bi-gear me-2"></i>Settings</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item text-danger" href="#" id="logoutDropdown"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+            </ul>
+          </div>
+        </div>
+      </header>
+
+      <div class="ap-content">
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+          <div class="ap-page-head">
+            <h1>Notifications Centre</h1>
+            <p id="notifSummary">System alerts and public announcements.</p>
+          </div>
+          <div class="d-flex gap-2 flex-wrap">
+            <button class="btn btn-outline-secondary d-flex align-items-center gap-2" id="markAllReadBtn">
+              <i class="bi bi-check2-all"></i> Mark all read
+            </button>
+            <button class="btn btn-primary d-flex align-items-center gap-2" data-bs-toggle="collapse" data-bs-target="#notifCompose">
+              <i class="bi bi-megaphone"></i> Compose
+            </button>
+          </div>
+        </div>
+
+        <div class="kpi-grid mb-4">
+          <div class="kpi-card">
+            <div class="kpi-icon bg-blue-light text-blue"><i class="bi bi-bell"></i></div>
+            <div>
+              <div class="kpi-label">Total</div>
+              <div class="kpi-value"><span id="notifKpiTotal">—</span></div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon bg-orange-light text-orange"><i class="bi bi-envelope-open"></i></div>
+            <div>
+              <div class="kpi-label">Unread</div>
+              <div class="kpi-value"><span id="notifKpiUnread">—</span></div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon bg-green-light text-green"><i class="bi bi-globe2"></i></div>
+            <div>
+              <div class="kpi-label">Public live</div>
+              <div class="kpi-value"><span id="notifKpiPublic">—</span></div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon bg-red-light text-red"><i class="bi bi-shield-exclamation"></i></div>
+            <div>
+              <div class="kpi-label">Critical</div>
+              <div class="kpi-value"><span id="notifKpiCritical">—</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="collapse mb-4" id="notifCompose">
+          <div class="ap-card notif-compose-card">
+            <div class="ap-card-header">
+              <h3 class="ap-card-title mb-0">Compose notification</h3>
+              <span class="small text-muted">Internal operators or public website visitors</span>
+            </div>
+            <div class="ap-card-body">
+              <div class="row g-3">
+                <div class="col-md-8">
+                  <label class="form-label small fw-semibold">Title</label>
+                  <input type="text" class="form-control" id="notifTitle" maxlength="200" placeholder="e.g. Scheduled maintenance this Saturday">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label small fw-semibold">Audience</label>
+                  <select class="form-select" id="notifAudience">
+                    <option value="PUBLIC">Public website</option>
+                    <option value="INTERNAL">Internal (operators)</option>
+                  </select>
+                </div>
+                <div class="col-12">
+                  <label class="form-label small fw-semibold">Message</label>
+                  <textarea class="form-control" id="notifMessage" rows="3" placeholder="Clear, professional message for your audience…"></textarea>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label small fw-semibold">Severity</label>
+                  <select class="form-select" id="notifSeverity">
+                    <option value="INFO">Info</option>
+                    <option value="WARNING">Warning</option>
+                    <option value="CRITICAL">Critical</option>
+                  </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                  <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" id="notifPinned">
+                    <label class="form-check-label" for="notifPinned">Pin to top</label>
+                  </div>
+                </div>
+                <div class="col-md-4 d-flex align-items-end justify-content-md-end gap-2">
+                  <button type="button" class="btn btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#notifCompose">Cancel</button>
+                  <button type="button" class="btn btn-primary" id="notifPublishBtn"><i class="bi bi-send me-1"></i>Publish</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ap-card mb-4 p-3 d-flex flex-wrap gap-3 align-items-center notif-filters">
+          <input type="text" class="form-control" id="notifSearch" placeholder="Search…" style="max-width: 260px;">
+          <select class="form-select" id="notifSeverityFilter" style="max-width: 150px;">
+            <option value="">All severities</option>
+            <option value="CRITICAL">Critical</option>
+            <option value="WARNING">Warning</option>
+            <option value="INFO">Info</option>
+          </select>
+          <select class="form-select" id="notifStatusFilter" style="max-width: 140px;">
+            <option value="">All statuses</option>
+            <option value="UNREAD">Unread</option>
+            <option value="READ">Read</option>
+          </select>
+          <select class="form-select" id="notifAudienceFilter" style="max-width: 170px;">
+            <option value="">All audiences</option>
+            <option value="INTERNAL">Internal</option>
+            <option value="PUBLIC">Public</option>
+          </select>
+          <select class="form-select" id="notifCategoryFilter" style="max-width: 200px;">
+            <option value="">All categories</option>
+            <option value="PUBLIC_ANNOUNCEMENT">Public announcement</option>
+            <option value="ADMIN_MESSAGE">Admin message</option>
+            <option value="LEAK_CONFIRMED">Leak confirmed</option>
+            <option value="LEAK_SUSPECTED">Leak suspected</option>
+            <option value="DEVICE_DISCONNECTED">Device disconnected</option>
+            <option value="VALVE_STATUS_CHANGED">Valve status</option>
+            <option value="SYSTEM">System</option>
+          </select>
+        </div>
+
+        <div class="ap-card notif-feed-card">
+          <div class="ap-card-header">
+            <h3 class="ap-card-title mb-0">Feed</h3>
+            <span class="small text-muted" id="notifPageInfo">—</span>
+          </div>
+          <div id="notifList" class="notif-feed">
+            <div class="p-5 text-center text-muted small">Loading notifications…</div>
+          </div>
+          <div class="ap-card-header border-top border-bottom-0 d-flex justify-content-end">
+            <nav>
+              <ul class="pagination pagination-sm mb-0" id="notifPagination"></ul>
+            </nav>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

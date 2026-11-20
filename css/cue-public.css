@@ -1,0 +1,288 @@
+/* CUE public pages — mobile-first, any device */
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  overflow-x: hidden;
+  padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+  min-width: 0;
+}
+
+img, video, svg, iframe {
+  max-width: 100%;
+  height: auto;
+}
+
+.container,
+.container-fluid {
+  max-width: 100%;
+}
+
+/* Shared public heroes */
+.cue-contact-hero,
+.cue-about-hero,
+.cue-notices-hero {
+  color: #fff;
+  padding: clamp(5.5rem, 14vw, 7.5rem) 0 clamp(2.5rem, 6vw, 4rem);
+}
+
+.cue-contact-hero {
+  background:
+    radial-gradient(ellipse at 20% 0%, rgba(14, 165, 233, 0.25), transparent 50%),
+    linear-gradient(160deg, #0b1220 0%, #0f766e 120%);
+}
+
+.cue-notices-hero {
+  background: linear-gradient(135deg, #0b1220 0%, #0f766e 100%);
+}
+
+.cue-contact-hero .container,
+.cue-about-hero .container,
+.cue-notices-hero .container {
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+}
+
+.cue-contact-hero h1,
+.cue-about-hero h1,
+.cue-notices-hero h1 {
+  font-size: clamp(1.75rem, 5.5vw, 3rem);
+  line-height: 1.15;
+  word-wrap: break-word;
+}
+
+.cue-contact-hero p,
+.cue-about-hero p,
+.cue-notices-hero p {
+  font-size: clamp(0.95rem, 2.8vw, 1.25rem);
+  max-width: 40rem;
+}
+
+/* Contact action cards */
+.cue-contact-card {
+  border: 0;
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.1);
+  height: 100%;
+  min-height: 0;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.cue-contact-card .cue-contact-label {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin: 0 0 0.25rem;
+}
+
+.cue-contact-card .cue-contact-hint {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.8rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.cue-contact-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 1.55rem;
+  color: #fff !important;
+  margin: 0 auto 0.75rem;
+  transition: transform 0.15s ease, filter 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+a.cue-contact-icon:hover,
+a.cue-contact-icon:focus-visible {
+  transform: scale(1.06);
+  filter: brightness(1.06);
+  color: #fff !important;
+  outline: none;
+}
+
+.cue-contact-icon.wa { background: #25d366; }
+.cue-contact-icon.call { background: #2563eb; }
+.cue-contact-icon.sms { background: #7c3aed; }
+.cue-contact-icon.mail { background: #0ea5e9; }
+.cue-contact-icon.mail2 { background: #0284c7; }
+
+.cue-contact-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+@media (min-width: 576px) {
+  .cue-contact-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+  }
+}
+
+@media (min-width: 992px) {
+  .cue-contact-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 1.15rem;
+  }
+
+  .cue-contact-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 18px 44px rgba(15, 23, 42, 0.14);
+  }
+}
+
+@media (max-width: 575.98px) {
+  .cue-contact-card {
+    padding: 1rem 0.75rem !important;
+    border-radius: 14px;
+  }
+
+  .cue-contact-icon {
+    width: 56px;
+    height: 56px;
+    font-size: 1.35rem;
+    margin-bottom: 0.55rem;
+  }
+
+  .cue-contact-card .cue-contact-label {
+    font-size: 0.88rem;
+  }
+
+  .cue-contact-card .cue-contact-hint {
+    font-size: 0.72rem;
+  }
+}
+
+/* Footer contact links on small screens */
+.footer .footer-item a {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.footer .footer-item .d-flex.gap-3 {
+  flex-wrap: wrap;
+  row-gap: 0.75rem;
+}
+
+/* Login — phone to desktop */
+.cue-login-wrap {
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.cue-login-wrap .form-control,
+.cue-login-wrap .input-group-text,
+.cue-login-wrap .btn {
+  min-height: 44px;
+}
+
+@media (max-width: 991.98px) {
+  .navbar.navbar-expand-lg .navbar-brand h1 {
+    font-size: 1.5rem;
+  }
+
+  body.bg-light > .container-fluid.bg-white .navbar {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  body.bg-light > .container-fluid.bg-white .btn {
+    font-size: 0.85rem;
+    padding: 0.4rem 0.9rem;
+  }
+}
+
+@media (max-width: 575.98px) {
+  body.bg-light > section.container {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+    padding-top: 1.25rem !important;
+    padding-bottom: 1.25rem !important;
+  }
+
+  body.bg-light .col-lg-6.p-4,
+  body.bg-light .col-lg-6.p-md-5 {
+    padding: 1.25rem !important;
+  }
+}
+
+/* Notices cards */
+.cue-notice-card {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 575.98px) {
+  .cue-notice-card {
+    padding: 1rem !important;
+  }
+}
+
+/* Carousel readability on phones / tablets */
+@media (max-width: 991.98px) {
+  .carousel-header .display-2 {
+    font-size: clamp(1.55rem, 6.5vw, 2.6rem) !important;
+    line-height: 1.2 !important;
+  }
+
+  .carousel-header .fs-5,
+  .carousel-header p {
+    font-size: clamp(0.9rem, 2.8vw, 1.05rem) !important;
+  }
+
+  .carousel-caption-1-content,
+  .carousel-caption-2-content {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  .carousel-caption-1-content-btn,
+  .carousel-caption-2-content-btn {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center !important;
+  }
+
+  .carousel-caption-1-content-btn .btn,
+  .carousel-caption-2-content-btn .btn {
+    padding: 0.65rem 1.25rem !important;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .carousel-header {
+    min-height: 70vh;
+  }
+
+  .carousel .carousel-inner .carousel-item {
+    min-height: 70vh;
+  }
+
+  .carousel .carousel-control-prev .carousel-control-prev-icon,
+  .carousel .carousel-control-next .carousel-control-next-icon {
+    width: 42px !important;
+    height: 42px !important;
+  }
+}
+
+/* Landscape phones */
+@media (max-height: 480px) and (orientation: landscape) {
+  .cue-contact-hero,
+  .cue-about-hero,
+  .cue-notices-hero {
+    padding-top: 4.5rem;
+    padding-bottom: 1.5rem;
+  }
+
+  .ms-chat-panel {
+    height: min(85vh, 420px) !important;
+  }
+}

@@ -1,0 +1,9 @@
+# Static multi-page frontend on Render
+# After deploy, set js/config.js to your cue-backend Render URL and redeploy (or edit in repo).
+services:
+  - type: web
+    name: cue-frontend
+    runtime: static
+    plan: free
+    buildCommand: "echo CUE static frontend"
+    staticPublishPath: .
