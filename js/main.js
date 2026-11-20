@@ -865,6 +865,10 @@
           '</div>' +
           '<div class="text-end">' +
             '<div class="fw-semibold small">' + (last.flow_rate != null ? fmt.num(last.flow_rate) + ' L/min' : '—') + '</div>' +
+            '<div class="text-muted" style="font-size:.68rem;">' +
+              (Number(last.flow_rate) > 0.05 ? 'flowing' : 'no flow') +
+              (last.pulse_count != null ? (' · pulses ' + last.pulse_count) : '') +
+            '</div>' +
             '<span class="status-badge ' + variant + '">' + (online ? 'ONLINE' : 'STALE') + '</span>' +
           '</div>' +
         '</div>';
