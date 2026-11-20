@@ -774,24 +774,42 @@
 
     function loadLive() {
       Api.get('/monitoring/live/').then(function (d) {
-        // {pipeline_id, current_flow_rate, consumption_today, unit?, sensors:[{sensor, position, last_reading:{...}}]}
+        // {pipeline_id, current_flow_rate, consumption_today, volume_unit?, sensors:[...]}
         setText('lm-flow-rate', fmt.num(d.current_flow_rate));
         setText('lm-volume', fmt.num(d.consumption_today));
-        setText('lm-volume-unit', d.unit || 'L');
-        setText('lm-flow-updated', 'Updated ' + new Date().toLocaleTimeString());
+        setText('lm-volume-unit', d.volume_unit || 'L');
         setText('lm-volume-updated', 'Since midnight');
 
         var sensors = d.sensors || [];
-        var onlineCount = sensors.filter(function (s) { return s.last_reading; }).length;
-        setBadge('lm-device-status', onlineCount > 0 ? 'ONLINE' : 'OFFLINE', onlineCount > 0 ? 'success' : 'danger');
+        var freshCount = sensors.filter(function (s) {
+          if (s.fresh === true) return true;
+          var ts = s.last_reading && s.last_reading.reading_timestamp;
+          if (!ts) return false;
+          return (Date.now() - new Date(ts).getTime()) <= 45000;
+        }).length;
+
+        // Prefer sensor reading time over wall clock so frozen data is obvious
+        var newestTs = null;
+        sensors.forEach(function (s) {
+          var ts = s.last_reading && s.last_reading.reading_timestamp;
+          if (ts && (!newestTs || new Date(ts) > newestTs)) newestTs = new Date(ts);
+        });
+        setText(
+          'lm-flow-updated',
+          newestTs
+            ? ('Reading ' + newestTs.toLocaleTimeString() + (freshCount ? '' : ' · STALE'))
+            : ('Updated ' + new Date().toLocaleTimeString())
+        );
+
+        setBadge('lm-device-status', freshCount > 0 ? 'ONLINE' : 'OFFLINE', freshCount > 0 ? 'success' : 'danger');
         setText('lm-device-detail', sensors.length ? sensors.length + ' sensor(s)' : 'No sensors');
 
-        var sensorStatus = !sensors.length ? 'UNKNOWN' : (onlineCount === sensors.length ? 'ONLINE' : 'DEGRADED');
-        setBadge('lm-sensor-status', sensorStatus, sensorStatus === 'ONLINE' ? 'success' : sensorStatus === 'DEGRADED' ? 'warning' : 'secondary');
-        setText('lm-sensor-detail', onlineCount + '/' + sensors.length + ' reporting');
+        var sensorStatus = !sensors.length ? 'UNKNOWN' : (freshCount === sensors.length ? 'ONLINE' : (freshCount > 0 ? 'DEGRADED' : 'OFFLINE'));
+        setBadge('lm-sensor-status', sensorStatus, sensorStatus === 'ONLINE' ? 'success' : sensorStatus === 'DEGRADED' ? 'warning' : 'danger');
+        setText('lm-sensor-detail', freshCount + '/' + sensors.length + ' reporting');
 
-        setText('lm-live-indicator', 'Live · ' + new Date().toLocaleTimeString());
-        pushLivePoint(d.current_flow_rate);
+        setText('lm-live-indicator', (freshCount ? 'Live' : 'Stale') + ' · ' + new Date().toLocaleTimeString());
+        if (freshCount) pushLivePoint(d.current_flow_rate);
         renderSensors(sensors);
       }).catch(function (err) { console.error('[live] live failed:', err); setText('lm-live-indicator', 'Live data unavailable'); });
     }
@@ -834,19 +852,20 @@
       }
       box.innerHTML = sensors.map(function (s) {
         var last = s.last_reading || {};
-        var online = !!s.last_reading;
+        var ts = last.reading_timestamp ? new Date(last.reading_timestamp) : null;
+        var online = s.fresh === true || (ts && (Date.now() - ts.getTime()) <= 45000);
         var variant = online ? 'success' : 'danger';
         return '<div class="d-flex align-items-center justify-content-between p-3 border-bottom" style="border-color:var(--border-color)!important;">' +
           '<div class="d-flex align-items-center gap-2">' +
             '<i class="bi bi-broadcast text-primary"></i>' +
             '<div>' +
               '<div class="fw-semibold small">' + escapeHtml(s.sensor || '—') + '</div>' +
-              '<div class="text-muted" style="font-size:.72rem;">' + escapeHtml(s.position || '') + '</div>' +
+              '<div class="text-muted" style="font-size:.72rem;">' + escapeHtml(s.position || '') + (ts ? (' · ' + ts.toLocaleTimeString()) : '') + '</div>' +
             '</div>' +
           '</div>' +
           '<div class="text-end">' +
             '<div class="fw-semibold small">' + (last.flow_rate != null ? fmt.num(last.flow_rate) + ' L/min' : '—') + '</div>' +
-            '<span class="status-badge ' + variant + '">' + (online ? 'ONLINE' : 'OFFLINE') + '</span>' +
+            '<span class="status-badge ' + variant + '">' + (online ? 'ONLINE' : 'STALE') + '</span>' +
           '</div>' +
         '</div>';
       }).join('');
