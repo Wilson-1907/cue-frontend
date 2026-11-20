@@ -2613,10 +2613,6 @@
       setText('fin-manual', money(data.manual_expense));
       ['fin-cur1', 'fin-cur2', 'fin-cur3'].forEach(function (id) { setText(id, cur); });
 
-      if (data.tips && data.tips.length) {
-        setText('finTips', data.tips.join(' '));
-      }
-
       var cats = data.by_category || [];
       var catEl = el('finCatList');
       if (catEl) {
