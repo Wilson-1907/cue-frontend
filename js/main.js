@@ -774,6 +774,7 @@
 
     function loadLive() {
       Api.get('/monitoring/live/').then(function (d) {
+        if (!d) throw new Error('Empty live payload');
         // {pipeline_id, current_flow_rate, consumption_today, volume_unit?, sensors:[...]}
         setText('lm-flow-rate', fmt.num(d.current_flow_rate));
         setText('lm-volume', fmt.num(d.consumption_today));
@@ -809,14 +810,38 @@
         setText('lm-sensor-detail', freshCount + '/' + sensors.length + ' reporting');
 
         setText('lm-live-indicator', (freshCount ? 'Live' : 'Stale') + ' · ' + new Date().toLocaleTimeString());
-        if (freshCount) pushLivePoint(d.current_flow_rate);
+        try {
+          pushLivePoint(d.current_flow_rate);
+        } catch (chartErr) {
+          console.warn('[live] chart update skipped:', chartErr);
+        }
         renderSensors(sensors);
-      }).catch(function (err) { console.error('[live] live failed:', err); setText('lm-live-indicator', 'Live data unavailable'); });
+      }).catch(function (err) {
+        console.error('[live] live failed:', err);
+        setText('lm-live-indicator', 'Retrying… ' + (err && err.message ? err.message : 'API error'));
+        // One automatic retry after Render wake / brief network blip
+        setTimeout(function () {
+          Api.get('/monitoring/live/').then(function (d) {
+            if (!d) return;
+            setText('lm-flow-rate', fmt.num(d.current_flow_rate));
+            setText('lm-volume', fmt.num(d.consumption_today));
+            setText('lm-volume-unit', d.volume_unit || 'L');
+            renderSensors(d.sensors || []);
+            setText('lm-live-indicator', 'Live · ' + new Date().toLocaleTimeString());
+          }).catch(function () {
+            setText('lm-live-indicator', 'Live data unavailable');
+          });
+        }, 2500);
+      });
     }
 
     function ensureLiveChart() {
       var target = el('liveFlowChart');
       if (!target || liveChart) return;
+      if (typeof ApexCharts === 'undefined') {
+        console.warn('[live] ApexCharts not loaded — KPIs still update without chart');
+        return;
+      }
       var c = themeColors();
       liveChart = new ApexCharts(target, {
         chart: { type: 'line', height: 320, animations: { dynamicAnimation: { speed: 300 } }, toolbar: { show: false } },
@@ -838,7 +863,7 @@
       if (v == null) return;
       ensureLiveChart();
       if (!liveChart) return;
-      liveSamples.push({ x: Date.now(), y: Number(v) });
+      liveSamples.push({ x: Date.now(), y: Number(v) || 0 });
       if (liveSamples.length > LIVE_MAX) liveSamples.shift();
       liveChart.updateSeries([{ name: 'Flow', data: liveSamples.slice() }]);
     }
