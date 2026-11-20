@@ -2267,10 +2267,16 @@
       setText('vc-mode-note', v.control_mode === 'AUTOMATIC' ? 'Rules-driven' : 'Operator-driven');
 
       var conn = v.connection_status || 'UNKNOWN';
+      // Prefer live telemetry age over a stale stored flag
+      if (v.device_last_communication) {
+        var ageMs = Date.now() - new Date(v.device_last_communication).getTime();
+        if (!isNaN(ageMs) && ageMs <= 120000) conn = 'CONNECTED';
+        else if (!isNaN(ageMs) && ageMs > 120000) conn = 'DISCONNECTED';
+      }
       setBadge('vc-conn-badge', conn, connVariant(conn));
       setText('vc-conn-note',
         (v.device_name || 'Device') +
-        (v.device_last_communication ? ' · last seen ' + fmt.timeAgo(v.device_last_communication) : ' · awaiting telemetry')
+        (v.device_last_communication ? ' · last seen ' + fmt.timeAgo(v.device_last_communication) : ' · awaiting PC Uno agent')
       );
 
       var details = el('vcDetailsBody');
@@ -2334,9 +2340,12 @@
         setBadge('vc-cmd-badge', latest.execution_status || latest.command_type || '—',
           latest.execution_status === 'EXECUTED' ? 'success'
             : latest.execution_status === 'FAILED' ? 'danger'
-            : latest.execution_status === 'PENDING' ? 'warning' : 'secondary');
+            : latest.execution_status === 'PENDING' || latest.execution_status === 'RECEIVED' ? 'warning' : 'secondary');
         setText('vc-cmd-note',
-          (latest.command_type || 'Command') + ' · ' + fmt.timeAgo(latest.requested_at));
+          (latest.command_type || 'Command') + ' · ' + fmt.timeAgo(latest.requested_at) +
+          (latest.execution_status === 'PENDING' || latest.execution_status === 'RECEIVED'
+            ? ' · waiting for PC Uno agent'
+            : ''));
         tbody.innerHTML = rows.slice(0, 20).map(function (r) {
           return '<tr>' +
             '<td class="text-muted small">' + fmt.datetime(r.requested_at) + '</td>' +
