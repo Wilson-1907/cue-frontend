@@ -51,7 +51,7 @@
       return proto + location.host + '/ws/stream/';
     })(),
     THEME_KEY: 'ap_theme',
-    REQUEST_TIMEOUT: 45000,
+    REQUEST_TIMEOUT: 90000,
   };
 
   /* ============================================================
@@ -241,8 +241,12 @@
       var token = localStorage.getItem(TOKEN_KEY);
       if (token) headers['Authorization'] = 'Bearer ' + token;
 
+      var timeoutMs = opts.timeout != null ? opts.timeout : CONFIG.REQUEST_TIMEOUT;
       var controller = new AbortController();
-      var timer = setTimeout(function () { controller.abort(); }, CONFIG.REQUEST_TIMEOUT);
+      var timer = null;
+      if (timeoutMs > 0) {
+        timer = setTimeout(function () { controller.abort(); }, timeoutMs);
+      }
 
       return fetch(url, {
         method: method,
@@ -250,7 +254,7 @@
         body: opts.body ? JSON.stringify(opts.body) : undefined,
         signal: controller.signal,
       }).then(function (res) {
-        clearTimeout(timer);
+        if (timer) clearTimeout(timer);
         if (res.status === 401 && !isRetry) {
           return refreshToken()
             .then(function () { return doRequest(method, path, opts, true); })
@@ -268,7 +272,14 @@
           return parseEnvelope(json);
         });
       }, function (e) {
-        clearTimeout(timer);
+        if (timer) clearTimeout(timer);
+        // Normalize browser abort noise so UI never shows "signal is aborted without reason"
+        if (e && (e.name === 'AbortError' || /abort/i.test(e.message || ''))) {
+          var soft = new Error('timeout');
+          soft.name = 'AbortError';
+          soft.silent = true;
+          throw soft;
+        }
         throw e;
       });
     }
@@ -853,7 +864,7 @@
     function loadLive() {
       if (liveInflight) return;
       liveInflight = true;
-      Api.get('/monitoring/live/').then(function (d) {
+      Api.get('/monitoring/live/', { timeout: 90000 }).then(function (d) {
         liveInflight = false;
         liveFailStreak = 0;
         pollHealthy = true;
@@ -861,18 +872,15 @@
       }).catch(function (err) {
         liveInflight = false;
         liveFailStreak += 1;
-        console.error('[live] live failed:', err);
-        // Don't thrash the status line on transient aborts / free-tier wake
-        if (isAbortError(err) || liveFailStreak < 3) {
-          if (pollHealthy) {
-            setLiveIndicator('Live - catching up...');
-          } else if (liveFailStreak === 1) {
-            setLiveIndicator('Connecting...');
-          }
+        if (!(err && err.silent)) console.error('[live] live failed:', err);
+        // Never surface abort/timeout text in the status line
+        if (isAbortError(err) || (err && err.silent) || liveFailStreak < 3) {
+          if (pollHealthy) setLiveIndicator('Live - catching up...');
+          else setLiveIndicator('Connecting...');
           return;
         }
         pollHealthy = false;
-        setLiveIndicator('Live data unavailable');
+        setLiveIndicator('Connecting...');
       });
     }
 
