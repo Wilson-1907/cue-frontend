@@ -2439,11 +2439,20 @@
       }).catch(function (err) { console.error('[valves] activities failed:', err); });
     }
 
+    var cmdBusy = false;
+    function setCmdButtonsDisabled(disabled) {
+      ['vcOpenBtn', 'vcCloseBtn', 'vcAutoBtn', 'vcManualBtn'].forEach(function (id) {
+        var b = el(id); if (b) b.disabled = !!disabled;
+      });
+    }
     function sendCommand(type) {
       if (!currentValve) { toast.error('No valve selected'); return; }
+      if (cmdBusy) { toast.info('Command already in progress'); return; }
+      cmdBusy = true;
+      setCmdButtonsDisabled(true);
       var path = '/valves/' + currentValve.id + '/' + type + '/';
       Api.post(path, {}).then(function (cmd) {
-        toast.success('Command submitted — waiting for hardware');
+        toast.success('Command submitted - waiting for hardware');
         setBadge('vc-cmd-badge', cmd.execution_status || 'PENDING', 'warning');
         setText('vc-cmd-note', 'Issued ' + fmt.timeAgo(cmd.requested_at || new Date().toISOString()));
         loadActivities();
@@ -2451,6 +2460,9 @@
       }).catch(function (err) {
         toast.error(err.message || 'Command failed');
         setBadge('vc-cmd-badge', 'FAILED', 'danger');
+      }).then(function () {
+        cmdBusy = false;
+        setCmdButtonsDisabled(false);
       });
     }
 
